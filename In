@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מנחש הבחורים מהשיעור 🧠</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; margin: 0; }
+        .container { max-width: 550px; margin: 40px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 5px; }
+        .sub-title { color: #666; margin-bottom: 25px; font-size: 14px; }
+        .box { background: #e9ecef; padding: 20px; border-radius: 10px; font-size: 20px; font-weight: bold; margin-bottom: 20px; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+        .btn-group { display: flex; justify-content: space-around; gap: 10px; }
+        button { flex: 1; padding: 15px; font-size: 18px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-yes { background-color: #28a745; color: white; }
+        .btn-no { background-color: #dc3545; color: white; }
+        .btn-restart { background-color: #007bff; color: white; margin-top: 15px; display: none; width: 100%; }
+        .remaining { font-size: 12px; color: #888; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>מנחש הבחורים 🧠</h1>
+    <div class="sub-title">חשוב בלב על בחור מהכיתה, ותראה אם המשחק יצליח לנחש אותו!</div>
+
+    <div class="box" id="questionBox">תחשוב על מישהו ולחץ על "התחל" כדי לשחק</div>
+    
+    <div class="btn-group">
+        <button class="btn-yes" id="btnYes" onclick="startGame()">התחל משחק</button>
+        <button class="btn-no" id="btnNo" style="display:none;" onclick="handleAnswer(false)">לא</button>
+    </div>
+    
+    <button class="btn-restart" id="btnRestart" onclick="resetGame()">שחק שוב 🔄</button>
+    
+    <div class="remaining" id="remainingText"></div>
+</div>
+
+<script>
+    // כל הבחורים שנתת לי עם המאפיינים שלהם (למד בלוד / אות ראשונה של שם פרטי ושם משפחה)
+    const allStudents = [
+        // למדו בלוד
+        { name: "מרדכי אייזנבאך", lod: true, firstP: "מ", firstM: "א" },
+        { name: "מנחם מענדל אייזנברג", lod: true, firstP: "מ", firstM: "א" },
+        { name: "שניאור זלמן בוטמן", lod: true, firstP: "ש", firstM: "ב" },
+        { name: "שמואל יהודה בורובסקי", lod: true, firstP: "ש", firstM: "ב" },
+        { name: "שמואל בטאשוילי", lod: true, firstP: "ש", firstM: "ב" },
+        { name: "שולם ברוד", lod: true, firstP: "ש", firstM: "ב" },
+        { name: "חיים משה מרדכי גורליק", lod: true, firstP: "ח", firstM: "ג" },
+        { name: "מנחם מענדל גליצנשטיין", lod: true, firstP: "מ", firstM: "ג" },
+        { name: "ישראל גרשוביץ", lod: true, firstP: "י", firstM: "ג" },
+        { name: "אליעזר הורוביץ", lod: true, firstP: "א", firstM: "ה" },
+        { name: "דוד פנחס הלפרין", lod: true, firstP: "ד", firstM: "ה" },
+        { name: "אפרים ווולף", lod: true, firstP: "א", firstM: "ו" },
+        { name: "מנחם מנדל וילנקין", lod: true, firstP: "מ", firstM: "ו" },
+        { name: "רפאל וקשטוק", lod: true, firstP: "ר", firstM: "ו" },
+        { name: "יעקב ישראל יפרח", lod: true, firstP: "י", firstM: "י" },
+        { name: "מאיר שמעון כהן", lod: true, firstP: "מ", firstM: "כ" },
+        { name: "מנחם מענדל כהן", lod: true, firstP: "מ", firstM: "כ" },
+        { name: "חיים עוזר כץ", lod: true, firstP: "ח", firstM: "כ" },
+        { name: "שמואל ליפקין", lod: true, firstP: "ש", firstM: "ל" },
+        { name: "דוד ליפש", lod: true, firstP: "ד", firstM: "ל" },
+        { name: "שניאור זלמן ח' יחי' לנדאו", lod: true, firstP: "ש", firstM: "ל" },
+        { name: "אבנר איתן מיכאלי", lod: true, firstP: "א", firstM: "מ" },
+        { name: "מנחם מענדל מיכאלשוילי", lod: true, firstP: "מ", firstM: "מ" },
+        { name: "דניאל חיים מירילשוילי", lod: true, firstP: "ד", firstM: "מ" },
+        { name: "שמואל מלכא", lod: true, firstP: "ש", firstM: "מ" },
+        { name: "דב בעריש מרטון", lod: true, firstP: "ד", firstM: "מ" },
+        { name: "מנחם מענדל נמירובסקי", lod: true, firstP: "מ", firstM: "נ" },
+        { name: "זאב נפתלין", lod: true, firstP: "ז", firstM: "נ" },
+        { name: "יחיאל מיכל סודקביץ", lod: true, firstP: "י", firstM: "ס" },
+        { name: "מנחם מענדל פרידמן", lod: true, firstP: "מ", firstM: "פרידמן" },
+        { name: "מנחם מענדל פרידמן (כפ\"ח)", lod: true, firstP: "מ", firstM: "פרידמן" },
+        { name: "יהודה אריה לייב ציקווושוילי", lod: true, firstP: "י", firstM: "צ" },
+        { name: "מנחם מענדל קוט", lod: true, firstP: "מ", firstM: "ק" },
+        { name: "מנחם מענדל קוק", lod: true, firstP: "מ", firstM: "ק" },
+        { name: "יוסף צבי קניג", lod: true, firstP: "י", firstM: "ק" },
+        { name: "חיים עוזר רבינוביץ'", lod: true, firstP: "ח", firstM: "ר" },
+        { name: "אהרן יעקב רוחמקין", lod: true, firstP: "א", firstM: "ר" },
+        { name: "יונתן ריבקין", lod: true, firstP: "י", firstM: "ר" },
+        { name: "שלום דובער ריבקין", lod: true, firstP: "ש", firstM: "ר" },
+        { name: "יעקב נח שטרסברג", lod: true, firstP: "י", firstM: "ש" },
+
+        // לא למדו בלוד
+        { name: "יוסף יצחק אנגלמן", lod: false, firstP: "י", firstM: "א" },
+        { name: "לוי מרדכי אנגלמן", lod: false, firstP: "ל", firstM: "א" },
+        { name: "מנחם מענדל בינשטוק", lod: false, firstP: "מ", firstM: "ב" },
+        { name: "ישראל אהרון ביר", lod: false, firstP: "י", firstM: "ב" },
+        { name: "מנחם מענדל בלינוב", lod: false, firstP: "מ", firstM: "ב" },
+        { name: "אליעזר ליפא בראון", lod: false, firstP: "א", firstM: "ב" },
+        { name: "שאול אליהו גולדמן", lod: false, firstP: "ש", firstM: "ג" },
+        { name: "בנימין מאיר גולדשטיין", lod: false, firstP: "ב", firstM: "ג" },
+        { name: "מנחם מענדל דושיץ", lod: false, firstP: "מ", firstM: "ד" },
+        { name: "יעקב וילהלם", lod: false, firstP: "י", firstM: "ו" },
+        { name: "אברהם משה וינפלד", lod: false, firstP: "א", firstM: "ו" },
+        { name: "אלימלך צבי ויסברג", lod: false, firstP: "א", firstM: "ו" },
+        { name: "אליסף נפתלי טירנואר", lod: false, firstP: "א", firstM: "ט" },
+        { name: "ישראל ארי' ליב טרקסלר", lod: false, firstP: "י", firstM: "ט" },
+        { name: "שלמה יהודה לייב לידר", lod: false, firstP: "ש", firstM: "ל" },
+        { name: "שניאור זלמן לפידות", lod: false, firstP: "ש", firstM: "ל" },
+        { name: "יעקב יוסף מונדשיין", lod: false, firstP: "י", firstM: "מ" },
+        { name: "שמואל משה עקשטיין", lod: false, firstP: "ש", firstM: "ע" },
+        { name: "מענדל פלדמן", lod: false, firstP: "מ", firstM: "פ" },
+        { name: "יעקב משה פרידמן", lod: false, firstP: "י", firstM: "פ" },
+        { name: "יונה זאב קטן", lod: false, firstP: "י", firstM: "ק" },
+        { name: "מנחם מעדל קניג", lod: false, firstP: "מ", firstM: "ק" },
+        { name: "מ\"מ קסלמן", lod: false, firstP: "מ", firstM: "ק" },
+        { name: "מנחם מענדל קפלן", lod: false, firstP: "מ", firstM: "ק" },
+        { name: "משה ניסן רבינוביץ", lod: false, firstP: "מ", firstM: "ר" },
+        { name: "ישראל אריה ליב ששונקין", lod: false, firstP: "י", firstM: "ש" }
+    ];
+
+    let currentPool = [];
+    let currentQuestionType = "";
+    let currentQuestionValue = null;
+
+    function startGame() {
+        currentPool = [...allStudents];
+        document.getElementById("btnYes").innerText = "כן";
+        document.getElementById("btnYes").className = "btn-yes";
+        document.getElementById("btnNo").style.display = "inline-block";
+        askNextQuestion();
+    }
+
+    function askNextQuestion() {
+        document.getElementById("remainingText").innerText = `נשארו עוד ${currentPool.length} אפשרויות`;
+
+        if (currentPool.length === 1) {
+            showGuess(currentPool[0].name);
+            return;
+        }
+        if (currentPool.length === 0) {
+            document.getElementById("questionBox").innerText = "הממ... משהו פה לא מסתדר לי בפרטים. בטוח שענית נכון?";
+            endGame();
+            return;
+        }
+
+        // 1. קודם כל בודקים את עניין לוד
+        const lodTrueCount = currentPool.filter(s => s.lod).length;
+        if (lodTrueCount > 0 && lodTrueCount < currentPool.length) {
+            currentQuestionType = "lod";
+            document.getElementById("questionBox").innerText = "האם הבחור למד בלוד?";
+            return;
+        }
+
+        // 2. שואלים על האות הראשונה של השם הפרטי
+        const pLetters = [...new Set(currentPool.map(s => s.firstP))];
+        if (pLetters.length > 1) {
+            currentQuestionType = "firstP";
+            currentQuestionValue = pLetters[0];
+            document.getElementById("questionBox").innerText = `האם השם הפרטי שלו מתחיל באות '${currentQuestionValue}'?`;
+            return;
+        }
+
+        // 3. שואלים על האות הראשונה של שם המשפחה
+        const mLetters = [...new Set(currentPool.map(s => s.firstM))];
+        if (mLetters.length > 1) {
+            currentQuestionType = "firstM";
+            currentQuestionValue = mLetters[0];
+            if(currentQuestionValue === "פרידמן") {
+                document.getElementById("questionBox").innerText = `האם שם המשפחה שלו הוא פרידמן?`;
+            } else {
+                document.getElementById("questionBox").innerText = `האם שם המשפחה שלו מתחיל באות '${currentQuestionValue}'?`;
+            }
+            return;
+        }
+
+        // אם נשארו כמה עם אותם נתונים בדיוק, פשוט מנחשים אחד מהם
+        showGuess(currentPool[0].name);
+    }
+
+    function handleAnswer(isYes) {
+        if (currentQuestionType === "lod") {
+            currentPool = currentPool.filter(s => s.lod === isYes);
+        } else if (currentQuestionType === "firstP") {
+            currentPool = currentPool.filter(s => (s.firstP === currentQuestionValue) === isYes);
+        } else if (currentQuestionType === "firstM") {
+            currentPool = currentPool.filter(s => (s.firstM === currentQuestionValue) === isYes);
+        } else if (currentQuestionType === "finalGuess") {
+            if (isYes) {
+                document.getElementById("questionBox").innerText = "קללל! ידעתי שאני אמצא אותו! 🎉🏆";
+                endGame();
+            } else {
+                // מורידים את הניחוש הלא נכון וממשיכים
+                currentPool = currentPool.filter(s => s.name !== currentQuestionValue);
+                askNextQuestion();
+            }
+            return;
+        }
+        askNextQuestion();
+    }
+
+    function showGuess(name) {
+        currentQuestionType = "finalGuess";
+        currentQuestionValue = name;
+        document.getElementById("questionBox").innerText = `האם הבחור שחשבת עליו הוא: ${name}? 🤔`;
+    }
+
+    function endGame() {
+        document.getElementById("btnYes").style.display = "none";
+        document.getElementById("btnNo").style.display = "none";
+        document.getElementById("btnRestart").style.display = "block";
+        document.getElementById("remainingText").innerText = "";
+    }
+
+    function resetGame() {
+        document.getElementById("btnYes").style.display = "inline-block";
+        document.getElementById("btnYes").innerText = "התחל משחק";
+        document.getElementById("btnRestart").style.display = "none";
+        document.getElementById("questionBox").innerText = "תחשוב על מישהו ולחץ על \"התחל\" כדי לשחק";
+        document.getElementById("remainingText").innerText = "";
+    }
+</script>
+
+</body>
+</html>
